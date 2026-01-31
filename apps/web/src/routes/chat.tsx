@@ -2,13 +2,16 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Avatar } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ModeToggle } from '@/components/mode-toggle'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { PrimarySidebar, type NavMenuType } from '@/components/layout/primary-sidebar'
+import { SecondaryPanel } from '@/components/layout/secondary-panel'
+import { mockServices } from '@/lib/mock-data'
 import { 
-  Send, Bot, User, Plus, MessageSquare, Menu, Terminal, LogOut
+  Send, Bot, User, Menu, Terminal
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -23,69 +26,43 @@ type Message = {
   timestamp: Date
 }
 
-function SidebarContent() {
-  return (
-    <div className="flex flex-col h-full">
-      <div className="p-4 border-b flex items-center gap-2 font-semibold">
-        <Bot className="h-6 w-6 text-primary" />
-        <span>Ocean1 AI</span>
-      </div>
-      
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        <Button variant="secondary" className="w-full justify-start gap-2">
-          <Plus className="h-4 w-4" />
-          New Chat
-        </Button>
-        
-        <div className="space-y-2">
-          <h4 className="text-xs font-medium text-muted-foreground px-2">Recent</h4>
-          <Button variant="ghost" className="w-full justify-start gap-2 text-sm font-normal truncate">
-            <MessageSquare className="h-4 w-4" />
-            Deploy to production
-          </Button>
-          <Button variant="ghost" className="w-full justify-start gap-2 text-sm font-normal truncate">
-            <MessageSquare className="h-4 w-4" />
-            Database backup issues
-          </Button>
-          <Button variant="ghost" className="w-full justify-start gap-2 text-sm font-normal truncate">
-            <MessageSquare className="h-4 w-4" />
-            EC2 instance scaling
-          </Button>
-        </div>
-      </div>
-
-      <div className="p-4 border-t mt-auto space-y-2">
-        <div className="flex items-center gap-3 px-2 py-2">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src="/placeholder-user.jpg" />
-            <AvatarFallback>JD</AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium">John Doe</span>
-            <span className="text-xs text-muted-foreground">Admin</span>
-          </div>
-          <Button variant="ghost" size="icon" className="ml-auto h-8 w-8" asChild>
-            <Link to="/login">
-              <LogOut className="h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function ChatPage() {
+  // Layout State
+  const [selectedService, setSelectedService] = useState<string>("svc-payment")
+  const [activeMenu, setActiveMenu] = useState<NavMenuType>("resources")
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  // Chat State
   const [input, setInput] = useState('')
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: 'Hello! I am your DevOps AI assistant. How can I help you manage your infrastructure today?',
-      timestamp: new Date()
-    }
-  ])
+  const [messages, setMessages] = useState<Message[]>([])
   const scrollRef = useRef<HTMLDivElement>(null)
+
+  // Initial Greeting
+  useEffect(() => {
+    if (messages.length === 0) {
+      const serviceName = mockServices.find(s => s.id === selectedService)?.name || "Service"
+      setMessages([{
+        id: '1',
+        role: 'assistant',
+        content: `Hello! I'm ready to help you manage **${serviceName}**. What would you like to do?`,
+        timestamp: new Date()
+      }])
+    }
+  }, []) // Run once on mount
+
+  // Update context when service changes
+  useEffect(() => {
+    if (messages.length > 0) {
+      const serviceName = mockServices.find(s => s.id === selectedService)?.name || "Service"
+      const contextMsg: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: `Context switched to **${serviceName}**.`,
+        timestamp: new Date()
+      }
+      setMessages(prev => [...prev, contextMsg])
+    }
+  }, [selectedService])
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -111,31 +88,46 @@ function ChatPage() {
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `I've analyzed your request: "${input}". Here's what I found...`,
+        content: `I've received your request for ${selectedService}: "${input}". Analyzing resources...`,
         timestamp: new Date()
       }
       setMessages(prev => [...prev, aiMsg])
     }, 1000)
   }
 
+  const SidebarContent = () => (
+    <div className="flex h-full">
+      <PrimarySidebar 
+        selectedService={selectedService}
+        onServiceChange={setSelectedService}
+        activeMenu={activeMenu}
+        onMenuChange={setActiveMenu}
+      />
+      <SecondaryPanel 
+        selectedService={selectedService}
+        activeMenu={activeMenu}
+      />
+    </div>
+  )
+
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       {/* Desktop Sidebar */}
-      <aside className="w-64 border-r bg-muted/20 hidden md:block">
+      <aside className="hidden md:flex h-full border-r">
         <SidebarContent />
       </aside>
 
       {/* Main Chat Area */}
-      <main className="flex-1 flex flex-col min-w-0">
-        <header className="h-14 border-b flex items-center justify-between px-4 md:px-6">
+      <main className="flex-1 flex flex-col min-w-0 bg-background/50">
+        <header className="h-14 border-b flex items-center justify-between px-4 md:px-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="flex items-center gap-2">
-            <Sheet>
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="md:hidden">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-64">
+              <SheetContent side="left" className="p-0 w-auto flex">
                 <SidebarContent />
               </SheetContent>
             </Sheet>
@@ -145,7 +137,12 @@ function ChatPage() {
                <span className="font-semibold">Ocean1 AI</span>
             </Link>
             
-            <Badge variant="outline" className="hidden md:inline-flex">v1.0.0</Badge>
+            <div className="hidden md:flex items-center gap-2">
+              <span className="font-medium text-sm text-muted-foreground">Context:</span>
+              <Badge variant="outline" className="font-normal">
+                {mockServices.find(s => s.id === selectedService)?.name}
+              </Badge>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <ModeToggle />
@@ -170,7 +167,7 @@ function ChatPage() {
                       ? "bg-primary text-primary-foreground rounded-tr-none" 
                       : "bg-muted/50 border rounded-tl-none"
                   )}>
-                    {msg.content}
+                    <div dangerouslySetInnerHTML={{ __html: msg.content.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') }} />
                   </div>
                   <span className="text-xs text-muted-foreground">
                     {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -199,7 +196,7 @@ function ChatPage() {
               <Input 
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask Ocean1 to manage your infrastructure..." 
+                placeholder={`Ask about ${mockServices.find(s => s.id === selectedService)?.name}...`}
                 className="pl-12 pr-12 h-12 rounded-full shadow-sm"
               />
               <Button 
