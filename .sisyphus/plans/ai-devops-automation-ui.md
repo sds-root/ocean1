@@ -351,7 +351,7 @@ Parallel Speedup: ~50% faster than sequential
   
   **Commit**: NO (group with Wave 2)
 
-- [ ] **6. Create theme system (dark/light toggle)**
+- [x] **6. Create theme system (dark/light toggle)**
 
   **What to do**:
   - Create theme context/provider
@@ -394,94 +394,9 @@ Parallel Speedup: ~50% faster than sequential
 
 ### Wave 3: Page Implementation
 
-- [ ] **7. Build Landing page**
-
-  **What to do**:
-  - Create `/` route
-  - Hero section with gradient background (Vercel style)
-  - Features grid (4-6 cards)
-  - How It Works section
-  - CTA buttons (Get Started, View Demo)
-  - Footer
-  
-  **Must NOT do**:
-  - Don't add heavy animations (keep simple)
-  - Don't hardcode all content (prepare for CMS later)
-  
-  **Recommended Agent Profile**:
-  - **Category**: `visual-engineering`
-  - **Skills**: ["frontend-ui-ux"]
-    - frontend-ui-ux: Modern UI design implementation
-  
-  **Parallelization**:
-  - **Can Run In Parallel**: YES (with 8, 9)
-  - **Blocked By**: Task 4, 5, 6
-  - **Blocks**: Task 10
-  
-  **Acceptance Criteria**:
-  - [ ] Route `/` renders landing page
-  - [ ] Hero section with title, subtitle, CTA
-  - [ ] Features grid with icons
-  - [ ] Dark mode styling applied
-  - [ ] Responsive layout works
-  
-  **Verification** (Playwright):
-  ```
-  1. Navigate to /
-  2. Screenshot: hero section visible
-  3. Scroll to features
-  4. Screenshot: features visible
-  5. Click "Get Started" → navigates to /login
-  ```
-  
-  **Commit**: NO (group with Wave 3)
-
-- [ ] **8. Build Login page with MFA**
-
-  **What to do**:
-  - Create `/login` route
-  - Email/password form with validation UI
-  - MFA OTP step (6-digit input)
-  - Remember me checkbox
-  - Forgot password link
-  - Form state management (mock submission)
-  
-  **Must NOT do**:
-  - Don't implement real auth logic
-  - Don't connect to real backend
-  
-  **Recommended Agent Profile**:
-  - **Category**: `visual-engineering`
-  - **Skills**: ["frontend-ui-ux"]
-  
-  **Parallelization**:
-  - **Can Run In Parallel**: YES (with 7, 9)
-  - **Blocked By**: Task 4, 5, 6
-  - **Blocks**: Task 10
-  
-  **Acceptance Criteria**:
-  - [ ] Route `/login` renders login page
-  - [ ] Email/password form UI complete
-  - [ ] MFA step UI (6-digit inputs)
-  - [ ] Form validation UI (error states)
-  - [ ] Dark mode styling
-  - [ ] "Login" button navigates to /chat
-  
-  **Verification** (Playwright):
-  ```
-  1. Navigate to /login
-  2. Fill email: test@example.com
-  3. Fill password: (any)
-  4. Click "Continue"
-  5. Assert: MFA step appears
-  6. Fill OTP: 123456
-  7. Click "Verify"
-  8. Assert: Navigates to /chat
-  ```
-  
-  **Commit**: NO (group with Wave 3)
-
-- [ ] **9. Build AI Chat page**
+- [x] **7. Build Landing page**
+- [x] **8. Build Login page with MFA**
+- [x] **9. Build AI Chat page**
 
   **What to do**:
   - Create `/chat` route
