@@ -241,7 +241,7 @@ Parallel Speedup: ~50% faster than sequential
   
   **Commit**: NO (group with Wave 1)
 
-- [ ] **3. Configure TailwindCSS + shadcn/ui base**
+- [x] **3. Configure TailwindCSS + shadcn/ui base**
 
   **What to do**:
   - Install TailwindCSS dependencies
@@ -280,7 +280,7 @@ Parallel Speedup: ~50% faster than sequential
 
 ### Wave 2: Core Infrastructure
 
-- [ ] **4. Setup TanStack Router**
+- [x] **4. Setup TanStack Router**
 
   **What to do**:
   - Install @tanstack/react-router
@@ -316,7 +316,7 @@ Parallel Speedup: ~50% faster than sequential
   
   **Commit**: NO (group with Wave 2)
 
-- [ ] **5. Install shadcn/ui components**
+- [x] **5. Install shadcn/ui components**
 
   **What to do**:
   - Initialize shadcn/ui in apps/web
