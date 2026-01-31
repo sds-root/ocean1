@@ -445,78 +445,9 @@ Parallel Speedup: ~50% faster than sequential
 
 ### Wave 4: Integration & Polish
 
-- [ ] **10. Connect routing between pages**
-
-  **What to do**:
-  - Ensure all routes work
-  - Add navigation links
-  - Handle 404s
-  - Add route guards (UI only, no auth logic)
-  
-  **Must NOT do**:
-  - Don't implement real auth guards
-  - Don't add loading states yet
-  
-  **Recommended Agent Profile**:
-  - **Category**: `unspecified-low`
-  - **Skills**: []
-  
-  **Parallelization**:
-  - **Can Run In Parallel**: YES (with 11)
-  - **Blocked By**: Task 7, 8, 9
-  - **Blocks**: Task 12
-  
-  **Acceptance Criteria**:
-  - [ ] All routes accessible: /, /login, /chat
-  - [ ] Navigation links work
-  - [ ] Browser back/forward works
-  
-  **Verification**:
-  ```bash
-  # Test all routes
-curl -s http://localhost:5173/ | grep -o "<title>.*</title>"
-curl -s http://localhost:5173/login | grep -o "<title>.*</title>"
-curl -s http://localhost:5173/chat | grep -o "<title>.*</title>"
-  ```
-  
-  **Commit**: NO (group with Wave 4)
-
-- [ ] **11. Responsive design pass**
-
-  **What to do**:
-  - Mobile: Sidebar becomes drawer
-  - Tablet: Adjusted spacing
-  - Desktop: Full layout
-  - Test all breakpoints
-  
-  **Must NOT do**:
-  - Don't over-optimize for mobile (desktop first)
-  - Don't add complex responsive logic
-  
-  **Recommended Agent Profile**:
-  - **Category**: `visual-engineering`
-  - **Skills**: ["frontend-ui-ux"]
-  
-  **Parallelization**:
-  - **Can Run In Parallel**: YES (with 10)
-  - **Blocked By**: Task 7, 8, 9
-  - **Blocks**: Task 12
-  
-  **Acceptance Criteria**:
-  - [ ] Mobile layout works (sidebar hidden/drawer)
-  - [ ] Tablet layout works
-  - [ ] Desktop layout works
-  - [ ] No horizontal scrollbars
-  
-  **Verification** (Playwright):
-  ```
-  Test at 375px, 768px, 1024px, 1440px viewports
-  Screenshot each page at each size
-  ```
-  
-  **Commit**: NO (group with Wave 4)
-
-- [ ] **12. Final verification**
+- [x] **10. Connect routing between pages**
+- [x] **11. Responsive design pass**
+- [x] **12. Final verification**
 
   **What to do**:
   - Run full build

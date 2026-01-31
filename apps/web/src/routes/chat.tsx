@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -6,15 +6,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ModeToggle } from '@/components/mode-toggle'
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { 
-  Send, 
-  Bot, 
-  User, 
-  Settings, 
-  Plus, 
-  MessageSquare, 
-  MoreVertical,
-  Terminal,
+  Send, Bot, User, Plus, MessageSquare, Menu, Terminal, LogOut
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -27,7 +21,58 @@ type Message = {
   role: 'user' | 'assistant'
   content: string
   timestamp: Date
-  type?: 'text' | 'command' | 'success' | 'error'
+}
+
+function SidebarContent() {
+  return (
+    <div className="flex flex-col h-full">
+      <div className="p-4 border-b flex items-center gap-2 font-semibold">
+        <Bot className="h-6 w-6 text-primary" />
+        <span>Ocean1 AI</span>
+      </div>
+      
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <Button variant="secondary" className="w-full justify-start gap-2">
+          <Plus className="h-4 w-4" />
+          New Chat
+        </Button>
+        
+        <div className="space-y-2">
+          <h4 className="text-xs font-medium text-muted-foreground px-2">Recent</h4>
+          <Button variant="ghost" className="w-full justify-start gap-2 text-sm font-normal truncate">
+            <MessageSquare className="h-4 w-4" />
+            Deploy to production
+          </Button>
+          <Button variant="ghost" className="w-full justify-start gap-2 text-sm font-normal truncate">
+            <MessageSquare className="h-4 w-4" />
+            Database backup issues
+          </Button>
+          <Button variant="ghost" className="w-full justify-start gap-2 text-sm font-normal truncate">
+            <MessageSquare className="h-4 w-4" />
+            EC2 instance scaling
+          </Button>
+        </div>
+      </div>
+
+      <div className="p-4 border-t mt-auto space-y-2">
+        <div className="flex items-center gap-3 px-2 py-2">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src="/placeholder-user.jpg" />
+            <AvatarFallback>JD</AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col">
+            <span className="text-sm font-medium">John Doe</span>
+            <span className="text-xs text-muted-foreground">Admin</span>
+          </div>
+          <Button variant="ghost" size="icon" className="ml-auto h-8 w-8" asChild>
+            <Link to="/login">
+              <LogOut className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function ChatPage() {
@@ -62,7 +107,6 @@ function ChatPage() {
     setMessages(prev => [...prev, userMsg])
     setInput('')
 
-    // Mock AI response
     setTimeout(() => {
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
@@ -76,65 +120,35 @@ function ChatPage() {
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      {/* Sidebar */}
-      <aside className="w-64 border-r bg-muted/20 hidden md:flex flex-col">
-        <div className="p-4 border-b flex items-center gap-2 font-semibold">
-          <Bot className="h-6 w-6 text-primary" />
-          <span>Ocean1 AI</span>
-        </div>
-        
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          <Button variant="secondary" className="w-full justify-start gap-2">
-            <Plus className="h-4 w-4" />
-            New Chat
-          </Button>
-          
-          <div className="space-y-2">
-            <h4 className="text-xs font-medium text-muted-foreground px-2">Recent</h4>
-            <Button variant="ghost" className="w-full justify-start gap-2 text-sm font-normal truncate">
-              <MessageSquare className="h-4 w-4" />
-              Deploy to production
-            </Button>
-            <Button variant="ghost" className="w-full justify-start gap-2 text-sm font-normal truncate">
-              <MessageSquare className="h-4 w-4" />
-              Database backup issues
-            </Button>
-            <Button variant="ghost" className="w-full justify-start gap-2 text-sm font-normal truncate">
-              <MessageSquare className="h-4 w-4" />
-              EC2 instance scaling
-            </Button>
-          </div>
-        </div>
-
-        <div className="p-4 border-t mt-auto space-y-2">
-          <div className="flex items-center gap-3 px-2 py-2">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src="/placeholder-user.jpg" />
-              <AvatarFallback>JD</AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium">John Doe</span>
-              <span className="text-xs text-muted-foreground">Admin</span>
-            </div>
-            <Button variant="ghost" size="icon" className="ml-auto h-8 w-8">
-              <Settings className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+      {/* Desktop Sidebar */}
+      <aside className="w-64 border-r bg-muted/20 hidden md:block">
+        <SidebarContent />
       </aside>
 
       {/* Main Chat Area */}
       <main className="flex-1 flex flex-col min-w-0">
         <header className="h-14 border-b flex items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-2">
-            <span className="font-semibold md:hidden">Ocean1 AI</span>
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-64">
+                <SidebarContent />
+              </SheetContent>
+            </Sheet>
+            
+            <Link to="/" className="flex items-center gap-2 md:hidden">
+               <Bot className="h-6 w-6 text-primary" />
+               <span className="font-semibold">Ocean1 AI</span>
+            </Link>
+            
             <Badge variant="outline" className="hidden md:inline-flex">v1.0.0</Badge>
           </div>
           <div className="flex items-center gap-2">
             <ModeToggle />
-            <Button variant="ghost" size="icon" className="md:hidden">
-              <MoreVertical className="h-5 w-5" />
-            </Button>
           </div>
         </header>
 
