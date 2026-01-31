@@ -1,0 +1,8 @@
+{
+  "name": "ocean1-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}

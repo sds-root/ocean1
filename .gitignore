@@ -1,0 +1,8 @@
+node_modules
+dist
+.env
+.DS_Store
+.sisyphus/evidence
+.sisyphus/temp
+bun.lockb
+!/bun.lockb
