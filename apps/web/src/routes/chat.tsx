@@ -153,7 +153,7 @@ function ChatPage() {
           <div className="max-w-3xl mx-auto space-y-8">
             {messages.map((msg) => (
               <div key={msg.id} className={cn("flex gap-4", msg.role === 'user' ? "flex-row-reverse" : "")}>
-                <Avatar className={cn("h-8 w-8 mt-1", msg.role === 'assistant' ? "bg-primary text-primary-foreground" : "bg-muted")}>
+                <Avatar className={cn("h-8 w-8 mt-1 flex items-center justify-center", msg.role === 'assistant' ? "bg-primary text-primary-foreground" : "bg-muted")}>
                   {msg.role === 'assistant' ? <Bot className="h-5 w-5" /> : <User className="h-5 w-5" />}
                 </Avatar>
                 
