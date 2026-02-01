@@ -10,12 +10,14 @@ import { cn } from "@/lib/utils"
 interface SecondaryPanelProps {
   selectedService: string
   activeMenu: NavMenuType
+  onSelect: (item: ResourceNode | Ticket) => void
   className?: string
 }
 
 export function SecondaryPanel({
   selectedService,
   activeMenu,
+  onSelect,
   className
 }: SecondaryPanelProps) {
   return (
@@ -26,10 +28,16 @@ export function SecondaryPanel({
       
       <ScrollArea className="flex-1 p-4">
         {activeMenu === "resources" && (
-          <ResourceTreeView resources={mockResources[selectedService] || []} />
+          <ResourceTreeView 
+            resources={mockResources[selectedService] || []} 
+            onSelect={onSelect}
+          />
         )}
         {activeMenu === "tickets" && (
-          <TicketListView tickets={mockTickets[selectedService] || []} />
+          <TicketListView 
+            tickets={mockTickets[selectedService] || []} 
+            onSelect={onSelect}
+          />
         )}
         {(activeMenu === "monitoring" || activeMenu === "settings") && (
           <div className="text-sm text-muted-foreground text-center py-10">
@@ -41,7 +49,7 @@ export function SecondaryPanel({
   )
 }
 
-function ResourceTreeView({ resources }: { resources: ResourceNode[] }) {
+function ResourceTreeView({ resources, onSelect }: { resources: ResourceNode[], onSelect: (item: ResourceNode) => void }) {
   if (resources.length === 0) {
     return <div className="text-sm text-muted-foreground">No resources found.</div>
   }
@@ -49,13 +57,13 @@ function ResourceTreeView({ resources }: { resources: ResourceNode[] }) {
   return (
     <Accordion type="multiple" className="w-full">
       {resources.map((node) => (
-        <ResourceNodeItem key={node.id} node={node} />
+        <ResourceNodeItem key={node.id} node={node} onSelect={onSelect} />
       ))}
     </Accordion>
   )
 }
 
-function ResourceNodeItem({ node }: { node: ResourceNode }) {
+function ResourceNodeItem({ node, onSelect }: { node: ResourceNode, onSelect: (item: ResourceNode) => void }) {
   if (node.type === "folder") {
     return (
       <AccordionItem value={node.id} className="border-none">
@@ -67,7 +75,7 @@ function ResourceNodeItem({ node }: { node: ResourceNode }) {
         </AccordionTrigger>
         <AccordionContent className="pl-4 pb-0">
           {node.children?.map((child) => (
-            <ResourceNodeItem key={child.id} node={child} />
+            <ResourceNodeItem key={child.id} node={child} onSelect={onSelect} />
           ))}
         </AccordionContent>
       </AccordionItem>
@@ -79,7 +87,10 @@ function ResourceNodeItem({ node }: { node: ResourceNode }) {
   const statusColor = getStatusColor(node.status)
 
   return (
-    <div className="flex items-center gap-2 py-2 px-2 hover:bg-muted/50 rounded-sm cursor-pointer group">
+    <div 
+      className="flex items-center gap-2 py-2 px-2 hover:bg-muted/50 rounded-sm cursor-pointer group transition-colors active:bg-muted"
+      onClick={() => onSelect(node)}
+    >
       <Icon className="h-4 w-4 text-muted-foreground" />
       <span className="text-sm flex-1 truncate">{node.name}</span>
       <div className={cn("h-2 w-2 rounded-full", statusColor)} />
@@ -87,7 +98,7 @@ function ResourceNodeItem({ node }: { node: ResourceNode }) {
   )
 }
 
-function TicketListView({ tickets }: { tickets: Ticket[] }) {
+function TicketListView({ tickets, onSelect }: { tickets: Ticket[], onSelect: (item: Ticket) => void }) {
   if (tickets.length === 0) {
     return <div className="text-sm text-muted-foreground">No active tickets.</div>
   }
@@ -95,7 +106,11 @@ function TicketListView({ tickets }: { tickets: Ticket[] }) {
   return (
     <div className="space-y-3">
       {tickets.map((ticket) => (
-        <Card key={ticket.id} className="hover:bg-muted/50 cursor-pointer transition-colors">
+        <Card 
+          key={ticket.id} 
+          className="hover:bg-muted/50 cursor-pointer transition-colors active:scale-[0.98] duration-100"
+          onClick={() => onSelect(ticket)}
+        >
           <CardHeader className="p-3 space-y-1">
             <div className="flex justify-between items-start">
               <Badge variant="outline" className="text-[10px] h-5">{ticket.id}</Badge>

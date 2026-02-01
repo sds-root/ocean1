@@ -9,7 +9,8 @@ import { ModeToggle } from '@/components/mode-toggle'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { PrimarySidebar, type NavMenuType } from '@/components/layout/primary-sidebar'
 import { SecondaryPanel } from '@/components/layout/secondary-panel'
-import { mockServices } from '@/lib/mock-data'
+import { DetailPanel } from '@/components/layout/detail-panel'
+import { mockServices, type ResourceNode, type Ticket } from '@/lib/mock-data'
 import { 
   Send, Bot, User, Menu, Terminal
 } from 'lucide-react'
@@ -30,6 +31,7 @@ function ChatPage() {
   // Layout State
   const [selectedService, setSelectedService] = useState<string>("svc-payment")
   const [activeMenu, setActiveMenu] = useState<NavMenuType>("resources")
+  const [selectedItem, setSelectedItem] = useState<ResourceNode | Ticket | null>(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   // Chat State
@@ -62,6 +64,8 @@ function ChatPage() {
       }
       setMessages(prev => [...prev, contextMsg])
     }
+    // Clear selection on service change
+    setSelectedItem(null)
   }, [selectedService])
 
   useEffect(() => {
@@ -95,17 +99,26 @@ function ChatPage() {
     }, 1000)
   }
 
+  const handleSelectItem = (item: ResourceNode | Ticket) => {
+    setSelectedItem(item)
+    // Optional: Auto-close mobile menu if item selected (if we implemented mobile detail view)
+  }
+
   const SidebarContent = () => (
     <div className="flex h-full">
       <PrimarySidebar 
         selectedService={selectedService}
         onServiceChange={setSelectedService}
         activeMenu={activeMenu}
-        onMenuChange={setActiveMenu}
+        onMenuChange={(menu) => {
+          setActiveMenu(menu)
+          setSelectedItem(null) // Clear selection when changing menu
+        }}
       />
       <SecondaryPanel 
         selectedService={selectedService}
         activeMenu={activeMenu}
+        onSelect={handleSelectItem}
       />
     </div>
   )
@@ -113,7 +126,7 @@ function ChatPage() {
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex h-full border-r">
+      <aside className="hidden md:flex h-full border-r shrink-0">
         <SidebarContent />
       </aside>
 
@@ -215,6 +228,16 @@ function ChatPage() {
           </div>
         </div>
       </main>
+
+      {/* Detail Panel (Right Sidebar) */}
+      {selectedItem && (
+        <aside className="w-80 border-l bg-background hidden lg:block shrink-0">
+          <DetailPanel 
+            item={selectedItem} 
+            onClose={() => setSelectedItem(null)} 
+          />
+        </aside>
+      )}
     </div>
   )
 }
