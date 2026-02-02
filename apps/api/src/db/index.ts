@@ -1,6 +1,6 @@
-import { drizzle } from "drizzle-orm/libsql";
-import { createClient } from "@libsql/client";
+import { drizzle } from 'drizzle-orm/bun-sqlite';
+import { Database } from 'bun:sqlite';
 import * as schema from "./schema";
 
-const client = createClient({ url: "file:sqlite.db" });
-export const db = drizzle(client, { schema });
+const sqlite = new Database('sqlite.db');
+export const db = drizzle(sqlite, { schema });
