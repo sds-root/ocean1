@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ElysiaTestRouteImport } from './routes/elysia-test'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as IndexRouteImport } from './routes/index'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ElysiaTestRoute = ElysiaTestRouteImport.update({
+  id: '/elysia-test',
+  path: '/elysia-test',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChatRoute = ChatRouteImport.update({
@@ -32,30 +38,34 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/chat': typeof ChatRoute
+  '/elysia-test': typeof ElysiaTestRoute
   '/login': typeof LoginRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/chat': typeof ChatRoute
+  '/elysia-test': typeof ElysiaTestRoute
   '/login': typeof LoginRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/chat': typeof ChatRoute
+  '/elysia-test': typeof ElysiaTestRoute
   '/login': typeof LoginRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/chat' | '/login'
+  fullPaths: '/' | '/chat' | '/elysia-test' | '/login'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/chat' | '/login'
-  id: '__root__' | '/' | '/chat' | '/login'
+  to: '/' | '/chat' | '/elysia-test' | '/login'
+  id: '__root__' | '/' | '/chat' | '/elysia-test' | '/login'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ChatRoute: typeof ChatRoute
+  ElysiaTestRoute: typeof ElysiaTestRoute
   LoginRoute: typeof LoginRoute
 }
 
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/elysia-test': {
+      id: '/elysia-test'
+      path: '/elysia-test'
+      fullPath: '/elysia-test'
+      preLoaderRoute: typeof ElysiaTestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chat': {
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ChatRoute: ChatRoute,
+  ElysiaTestRoute: ElysiaTestRoute,
   LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
