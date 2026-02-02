@@ -6,3 +6,4 @@ dist
 .sisyphus/temp
 bun.lockb
 !/bun.lockb
+*.db
