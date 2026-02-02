@@ -1,0 +1,23 @@
+{
+  "name": "api",
+  "module": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push"
+  },
+  "dependencies": {
+    "@elysiajs/cors": "latest",
+    "better-sqlite3": "^12.6.2",
+    "drizzle-orm": "^0.45.1",
+    "elysia": "latest"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "bun-types": "latest",
+    "drizzle-kit": "0.30.0",
+    "esbuild": "^0.27.2",
+    "prebuild-install": "^7.1.3"
+  }
+}
