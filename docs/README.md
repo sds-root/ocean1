@@ -5,6 +5,7 @@ AI DevOps Automation Tool 개발 과정을 기록하는 공간입니다.
 ## 📅 Development Logs
 
 ### 2026-02
+*   [2026-02-03 (v1): ElysiaJS 백엔드 및 Eden Treaty 설정](devlog/2026-02-03_v1.md)
 *   [2026-02-01 (v4): 상세내용 패널 추가](devlog/2026-02-01_v4.md)
 *   [2026-02-01 (v3): 버그 수정 - 아바타 아이콘 정렬](devlog/2026-02-01_v3.md)
 *   [2026-02-01 (v2): UI 고도화 - 서비스 컨텍스트 및 리소스 관리](devlog/2026-02-01_v2.md)

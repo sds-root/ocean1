@@ -1,26 +1,8 @@
 # Learnings
-- Monorepo uses Bun workspaces.
-- `apps/web` is the frontend.
-- `apps/api` will be the backend.
-- `web` package is named `web` (not scoped).
-
-## Drizzle & Bun SQLite Setup
-- Configured Drizzle ORM in `apps/api` using `bun:sqlite` adapter.
-- `src/db/index.ts` exports the `db` instance.
-- `src/db/schema.ts` defines a `todos` table.
-- Encountered issues with `drizzle-kit push` crashing on Bun 1.3.8 (Windows) and failing to find `drizzle-orm` due to symlinks.
-- Manually generated `sqlite.db` using a temporary Bun script when `db:push` failed.
-- Drizzle config set to `sqlite` dialect with `drizzle.config.ts`.
-- Switched Drizzle driver in `apps/api` from `bun-sqlite` to `better-sqlite3`.
-- On Windows, `better-sqlite3` installation via Bun may require `prebuild-install` to be installed explicitly if it's not found by the installer script.
-## 2026-02-02: SQLite Drivers on Bun Windows
-- Use bun:sqlite for stable local SQLite on Windows.
-- Avoid native bindings like better-sqlite3 and @libsql/client for local files as they trigger Bun panics.
-- Reverted to `bun:sqlite` (via `drizzle-orm/bun-sqlite`) after `check-native.ts` confirmed its reliability in this environment.
-- Updated apps/api/src/index.ts to include CORS and database connection.
-- Added /api/todos route to fetch todos from SQLite database using Drizzle.
-- Exported App type for frontend type safety.
-## 2026-02-03: Web Build Fixed
-- Fixed argument mismatch in mock DB `from()` method in `apps/api/src/db/index.ts`.
-- Triggered TanStack Router route tree generation by running `vite build` directly in `apps/web`.
-- Verified that `bun run --filter web build` now completes successfully, ensuring type safety between Backend (Elysia) and Frontend (Eden Treaty).
+- **Bun + Windows + Elysia/Drizzle**: Bun 1.3.8 on Windows has severe compatibility issues with native SQLite (bun:sqlite) and Drizzle ORM, causing "panic: invalid enum value" crashes.
+- **Workaround**: Using `bun:sqlite` directly (not through Drizzle) works fine, but Drizzle integration fails.
+- **Alternative**: Native `bun:sqlite` + Drizzle causes crashes; `better-sqlite3` also crashes; `@libsql/client` also crashes.
+- **Resolution**: Implemented Mock DB in `apps/api/src/db/index.ts` to unblock frontend work. Mock matches Drizzle API signature.
+- **Frontend Integration**: Eden Treaty (`@elysiajs/eden`) successfully configured in `apps/web`. Build passes with type checking.
+- **Build Script**: `bun run --filter web build` failed initially due to missing `tsc` in local node_modules. Fixed by running `bun install` in root for workspace linking, and build now passes using `bunx tsc -b`.
+- **TanStack Router**: New routes need `vite build` to generate `routeTree.gen.ts` before `tsc` type checking, otherwise route types won't be found.
