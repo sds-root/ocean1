@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState, useRef, useEffect } from 'react'
+import { useChat } from '@ai-sdk/react'
+import ReactMarkdown from 'react-markdown'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar } from '@/components/ui/avatar'
@@ -20,13 +22,6 @@ export const Route = createFileRoute('/chat')({
   component: ChatPage,
 })
 
-type Message = {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
-  timestamp: Date
-}
-
 function ChatPage() {
   // Layout State
   const [selectedService, setSelectedService] = useState<string>("svc-payment")
@@ -35,8 +30,11 @@ function ChatPage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   // Chat State
-  const [input, setInput] = useState('')
-  const [messages, setMessages] = useState<Message[]>([])
+  const { messages, input, handleInputChange, handleSubmit, setMessages } = useChat({
+    api: 'http://localhost:3000/api/chat',
+    body: { selectedService },
+    streamProtocol: 'text', // Explicitly tell useChat to expect plain text stream
+  })
   const scrollRef = useRef<HTMLDivElement>(null)
 
   // Initial Greeting
@@ -47,7 +45,7 @@ function ChatPage() {
         id: '1',
         role: 'assistant',
         content: `Hello! I'm ready to help you manage **${serviceName}**. What would you like to do?`,
-        timestamp: new Date()
+        createdAt: new Date()
       }])
     }
   }, []) // Run once on mount
@@ -56,11 +54,11 @@ function ChatPage() {
   useEffect(() => {
     if (messages.length > 0) {
       const serviceName = mockServices.find(s => s.id === selectedService)?.name || "Service"
-      const contextMsg: Message = {
+      const contextMsg = {
         id: Date.now().toString(),
-        role: 'assistant',
+        role: 'assistant' as const,
         content: `Context switched to **${serviceName}**.`,
-        timestamp: new Date()
+        createdAt: new Date()
       }
       setMessages(prev => [...prev, contextMsg])
     }
@@ -77,26 +75,7 @@ function ChatPage() {
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim()) return
-
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: input,
-      timestamp: new Date()
-    }
-
-    setMessages(prev => [...prev, userMsg])
-    setInput('')
-
-    setTimeout(() => {
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: `I've received your request for ${selectedService}: "${input}". Analyzing resources...`,
-        timestamp: new Date()
-      }
-      setMessages(prev => [...prev, aiMsg])
-    }, 1000)
+    handleSubmit(e)
   }
 
   const handleSelectItem = (item: ResourceNode | Ticket) => {
@@ -180,10 +159,14 @@ function ChatPage() {
                       ? "bg-primary text-primary-foreground rounded-tr-none" 
                       : "bg-muted/50 border rounded-tl-none"
                   )}>
-                    <div dangerouslySetInnerHTML={{ __html: msg.content.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') }} />
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    </div>
                   </div>
                   <span className="text-xs text-muted-foreground">
-                    {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {msg.createdAt instanceof Date 
+                      ? msg.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      : new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
               </div>
@@ -208,7 +191,7 @@ function ChatPage() {
               </div>
               <Input 
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={handleInputChange}
                 placeholder={`Ask about ${mockServices.find(s => s.id === selectedService)?.name}...`}
                 className="pl-12 pr-12 h-12 rounded-full shadow-sm"
               />

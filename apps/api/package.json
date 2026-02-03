@@ -9,6 +9,11 @@
   },
   "dependencies": {
     "@elysiajs/cors": "latest",
+    "@ai-sdk/google": "^3.0.20",
+    "@ai-sdk/openai": "^3.0.25",
+    "ai": "^6.0.68",
+    "dotenv": "^16.4.7",
+    "zod": "^3.24.1",
     "drizzle-orm": "^0.45.1",
     "elysia": "latest"
   },

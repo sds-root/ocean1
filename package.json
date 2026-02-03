@@ -5,8 +5,12 @@
     "apps/*",
     "packages/*"
   ],
+  "scripts": {
+    "dev": "concurrently -n \"api,web\" -c \"blue,green\" \"bun run --filter api dev\" \"bun run --filter web dev\""
+  },
   "devDependencies": {
     "@playwright/test": "^1.58.1",
+    "concurrently": "^9.2.1",
     "playwright": "^1.58.1"
   }
 }
