@@ -39,9 +39,9 @@ Enable real-time, streaming conversational AI in the existing chat interface.
 - `apps/api/.env` (Configuration)
 
 ### Definition of Done
-- [ ] Backend responds to `curl` with streaming text
-- [ ] Frontend displays streaming tokens as they arrive
-- [ ] Context (selected service) is reflected in AI responses
+- [x] Backend responds to `curl` with streaming text
+- [x] Frontend displays streaming tokens as they arrive
+- [x] Context (selected service) is reflected in AI responses
 
 ### Must Have
 - Streaming support
@@ -189,5 +189,5 @@ Wave 2 (Frontend):
   - **Blocks**: None
 
   **Acceptance Criteria**:
-  - [ ] `grep "useChat" apps/web/src/routes/chat.tsx` → found
-  - [ ] UI builds without error (`bun --filter web build`)
+  - [x] `grep "useChat" apps/web/src/routes/chat.tsx` → found
+  - [x] UI builds without error (`bun --filter web build`)
