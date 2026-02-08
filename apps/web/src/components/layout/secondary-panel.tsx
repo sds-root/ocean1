@@ -2,23 +2,32 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { SettingsSubmenu } from "@/components/settings/settings-submenu"
 import { mockResources, mockTickets, type ResourceNode, type Ticket } from "@/lib/mock-data"
 import type { NavMenuType } from "./primary-sidebar"
-import { Folder, Server, Database, Box } from "lucide-react"
+import { Folder, Server, Database, Box, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { type MentionItem } from "@/types/mention"
 
 interface SecondaryPanelProps {
   selectedService: string
   activeMenu: NavMenuType
   onSelect: (item: ResourceNode | Ticket) => void
   className?: string
+  activeSettingsTab?: 'accounts' | 'integrations'
+  onSettingsTabChange?: (tab: 'accounts' | 'integrations') => void
+  onAddMention?: (item: MentionItem) => void
 }
 
 export function SecondaryPanel({
   selectedService,
   activeMenu,
   onSelect,
-  className
+  className,
+  activeSettingsTab,
+  onSettingsTabChange,
+  onAddMention
 }: SecondaryPanelProps) {
   return (
     <div className={cn("w-80 flex flex-col border-r bg-background h-full", className)}>
@@ -26,30 +35,50 @@ export function SecondaryPanel({
         <h2 className="font-semibold text-sm capitalize">{activeMenu}</h2>
       </div>
       
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1">
         {activeMenu === "resources" && (
-          <ResourceTreeView 
-            resources={mockResources[selectedService] || []} 
-            onSelect={onSelect}
-          />
+          <div className="p-4">
+            <ResourceTreeView 
+              resources={mockResources[selectedService] || []} 
+              onSelect={onSelect}
+              onAddMention={onAddMention}
+            />
+          </div>
         )}
         {activeMenu === "tickets" && (
-          <TicketListView 
-            tickets={mockTickets[selectedService] || []} 
-            onSelect={onSelect}
-          />
-        )}
-        {(activeMenu === "monitoring" || activeMenu === "settings") && (
-          <div className="text-sm text-muted-foreground text-center py-10">
-            No {activeMenu} content yet.
+          <div className="p-4">
+            <TicketListView 
+              tickets={mockTickets[selectedService] || []} 
+              onSelect={onSelect}
+              onAddMention={onAddMention}
+            />
           </div>
+        )}
+        {activeMenu === "monitoring" && (
+          <div className="p-4 text-sm text-muted-foreground text-center py-10">
+            No monitoring content yet.
+          </div>
+        )}
+        {activeMenu === "settings" && activeSettingsTab && onSettingsTabChange && (
+          <SettingsSubmenu 
+            activeTab={activeSettingsTab}
+            onSelect={onSettingsTabChange}
+          />
         )}
       </ScrollArea>
     </div>
   )
 }
 
-function ResourceTreeView({ resources, onSelect }: { resources: ResourceNode[], onSelect: (item: ResourceNode) => void }) {
+function ResourceTreeView({ 
+  resources, 
+  onSelect,
+  onAddMention
+}: { 
+  resources: ResourceNode[], 
+  onSelect: (item: ResourceNode) => void,
+  onAddMention?: (item: MentionItem) => void
+}) {
   if (resources.length === 0) {
     return <div className="text-sm text-muted-foreground">No resources found.</div>
   }
@@ -57,13 +86,21 @@ function ResourceTreeView({ resources, onSelect }: { resources: ResourceNode[], 
   return (
     <Accordion type="multiple" className="w-full">
       {resources.map((node) => (
-        <ResourceNodeItem key={node.id} node={node} onSelect={onSelect} />
+        <ResourceNodeItem key={node.id} node={node} onSelect={onSelect} onAddMention={onAddMention} />
       ))}
     </Accordion>
   )
 }
 
-function ResourceNodeItem({ node, onSelect }: { node: ResourceNode, onSelect: (item: ResourceNode) => void }) {
+function ResourceNodeItem({ 
+  node, 
+  onSelect,
+  onAddMention
+}: { 
+  node: ResourceNode, 
+  onSelect: (item: ResourceNode) => void,
+  onAddMention?: (item: MentionItem) => void
+}) {
   if (node.type === "folder") {
     return (
       <AccordionItem value={node.id} className="border-none">
@@ -75,7 +112,7 @@ function ResourceNodeItem({ node, onSelect }: { node: ResourceNode, onSelect: (i
         </AccordionTrigger>
         <AccordionContent className="pl-4 pb-0">
           {node.children?.map((child) => (
-            <ResourceNodeItem key={child.id} node={child} onSelect={onSelect} />
+            <ResourceNodeItem key={child.id} node={child} onSelect={onSelect} onAddMention={onAddMention} />
           ))}
         </AccordionContent>
       </AccordionItem>
@@ -94,11 +131,41 @@ function ResourceNodeItem({ node, onSelect }: { node: ResourceNode, onSelect: (i
       <Icon className="h-4 w-4 text-muted-foreground" />
       <span className="text-sm flex-1 truncate">{node.name}</span>
       <div className={cn("h-2 w-2 rounded-full", statusColor)} />
+      
+      {onAddMention && (
+        <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 overflow-hidden w-0 group-hover:w-6">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 shrink-0 hover:bg-background"
+            onClick={(e) => {
+              e.stopPropagation()
+              onAddMention({ 
+                id: node.id, 
+                type: 'resource', 
+                name: node.name, 
+                original: node 
+              })
+            }}
+          >
+            <Plus className="h-3 w-3" />
+            <span className="sr-only">Add to context</span>
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
 
-function TicketListView({ tickets, onSelect }: { tickets: Ticket[], onSelect: (item: Ticket) => void }) {
+function TicketListView({ 
+  tickets, 
+  onSelect,
+  onAddMention
+}: { 
+  tickets: Ticket[], 
+  onSelect: (item: Ticket) => void,
+  onAddMention?: (item: MentionItem) => void
+}) {
   if (tickets.length === 0) {
     return <div className="text-sm text-muted-foreground">No active tickets.</div>
   }
@@ -108,13 +175,35 @@ function TicketListView({ tickets, onSelect }: { tickets: Ticket[], onSelect: (i
       {tickets.map((ticket) => (
         <Card 
           key={ticket.id} 
-          className="hover:bg-muted/50 cursor-pointer transition-colors active:scale-[0.98] duration-100"
+          className="hover:bg-muted/50 cursor-pointer transition-colors active:scale-[0.98] duration-100 group relative"
           onClick={() => onSelect(ticket)}
         >
           <CardHeader className="p-3 space-y-1">
             <div className="flex justify-between items-start">
               <Badge variant="outline" className="text-[10px] h-5">{ticket.id}</Badge>
-              <TicketStatusBadge status={ticket.status} />
+              <div className="flex items-center gap-1">
+                <TicketStatusBadge status={ticket.status} />
+                {onAddMention && (
+                  <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 overflow-hidden w-0 group-hover:w-5">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5 hover:bg-background shadow-sm border p-0"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onAddMention({ 
+                          id: ticket.id, 
+                          type: 'ticket', 
+                          name: ticket.title, 
+                          original: ticket 
+                        })
+                      }}
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
             <CardTitle className="text-sm font-medium leading-tight">
               {ticket.title}

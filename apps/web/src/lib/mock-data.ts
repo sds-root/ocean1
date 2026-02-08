@@ -3,6 +3,7 @@ export type Service = {
   id: string
   name: string
   description: string
+  status?: "healthy" | "degraded" | "down"
 }
 
 export type ResourceNode = {
@@ -32,10 +33,116 @@ export type Ticket = {
   comments?: { user: string; text: string; time: string }[]
 }
 
+// --- New Types for Service-Centric Settings ---
+
+export type CloudAccount = {
+  id: string
+  provider: 'AWS' | 'GCP' | 'Azure'
+  name: string
+  accountId: string
+  region: string
+  status: 'connected' | 'disconnected'
+}
+
+export type ServiceCloudAccount = {
+  serviceId: string
+  accountId: string
+  resources: string[]
+  syncEnabled: boolean
+}
+
+export type ServiceIntegration = {
+  id: string
+  serviceId: string
+  type: 'prometheus' | 'grafana' | 'datadog' | 'newrelic'
+  name: string
+  config: {
+    endpoint?: string
+    apiKey?: string
+    dashboardUrl?: string
+  }
+  status: 'connected' | 'disconnected'
+}
+
+export type GlobalIntegration = {
+  id: string
+  type: 'slack' | 'email' | 'pagerduty' | 'webhook'
+  name: string
+  config: {
+    workspace?: string
+    channel?: string
+    webhookUrl?: string
+    smtpServer?: string
+    recipients?: string[]
+  }
+  status: 'connected' | 'disconnected'
+  serviceFilters: string[] | null // null means all services
+}
+
+// --- Mock Data ---
+
+export const mockCloudAccounts: CloudAccount[] = [
+  { id: 'aws-prod', provider: 'AWS', name: 'Production AWS', accountId: '123456789012', region: 'us-east-1', status: 'connected' },
+  { id: 'gcp-staging', provider: 'GCP', name: 'Staging GCP', accountId: 'my-project-123', region: 'us-central1', status: 'connected' },
+  { id: 'azure-dev', provider: 'Azure', name: 'Dev Azure', accountId: 'sub-dev-999', region: 'eastus', status: 'disconnected' },
+]
+
+export const mockServiceCloudAccounts: ServiceCloudAccount[] = [
+  { serviceId: 'svc-payment', accountId: 'aws-prod', resources: ['ec2', 'rds'], syncEnabled: true },
+  { serviceId: 'svc-auth', accountId: 'aws-prod', resources: ['ec2'], syncEnabled: true }, // Shared account
+  { serviceId: 'svc-payment', accountId: 'gcp-staging', resources: ['gke'], syncEnabled: false },
+]
+
+export const mockServiceIntegrations: ServiceIntegration[] = [
+  { 
+    id: 'int-pay-prom', 
+    serviceId: 'svc-payment', 
+    type: 'prometheus', 
+    name: 'Prometheus Prod', 
+    config: { endpoint: 'http://prometheus:9090' }, 
+    status: 'connected' 
+  },
+  { 
+    id: 'int-pay-graf', 
+    serviceId: 'svc-payment', 
+    type: 'grafana', 
+    name: 'Payment Dashboard', 
+    config: { dashboardUrl: 'https://grafana.internal/d/payment' }, 
+    status: 'connected' 
+  },
+  { 
+    id: 'int-auth-graf', 
+    serviceId: 'svc-auth', 
+    type: 'grafana', 
+    name: 'Auth Metrics', 
+    config: { dashboardUrl: 'https://grafana.internal/d/auth' }, 
+    status: 'disconnected' 
+  },
+]
+
+export const mockGlobalIntegrations: GlobalIntegration[] = [
+  { 
+    id: 'global-slack', 
+    type: 'slack', 
+    name: 'Team Slack', 
+    config: { channel: '#ocean1-alerts', workspace: 'Ocean1 Corp' }, 
+    status: 'connected',
+    serviceFilters: null // All services
+  },
+  { 
+    id: 'global-pagerduty', 
+    type: 'pagerduty', 
+    name: 'Ops On-Call', 
+    config: { webhookUrl: 'https://events.pagerduty.com/v2/enqueue' }, 
+    status: 'connected',
+    serviceFilters: ['svc-payment'] // Critical services only
+  },
+]
+
 export const mockServices: Service[] = [
-  { id: "svc-payment", name: "Payment Service", description: "Core payment processing system" },
-  { id: "svc-auth", name: "Auth Service", description: "User authentication & authorization" },
-  { id: "svc-inventory", name: "Inventory System", description: "Product stock management" },
+  { id: "svc-payment", name: "Payment Service", description: "Core payment processing system", status: "healthy" },
+  { id: "svc-auth", name: "Auth Service", description: "User authentication & authorization", status: "healthy" },
+  { id: "svc-inventory", name: "Inventory System", description: "Product stock management", status: "degraded" },
 ]
 
 export const mockResources: Record<string, ResourceNode[]> = {

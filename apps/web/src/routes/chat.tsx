@@ -12,11 +12,17 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { PrimarySidebar, type NavMenuType } from '@/components/layout/primary-sidebar'
 import { SecondaryPanel } from '@/components/layout/secondary-panel'
 import { DetailPanel } from '@/components/layout/detail-panel'
+import { CloudAccountsPanel } from '@/components/settings/cloud-accounts-panel'
+import { IntegrationsPanel } from '@/components/settings/integrations-panel'
 import { mockServices, type ResourceNode, type Ticket } from '@/lib/mock-data'
 import { 
   Send, Bot, User, Menu, Terminal
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useMention } from '@/hooks/use-mention'
+import { MentionChipList } from '@/components/chat/mention-chip-list'
+import { MentionAutocomplete } from '@/components/chat/mention-autocomplete'
+import { type MentionItem } from '@/types/mention'
 
 
 function SidebarContent({
@@ -24,13 +30,19 @@ function SidebarContent({
   onServiceChange,
   activeMenu,
   onMenuChange,
-  onSelectItem
+  onSelectItem,
+  activeSettingsTab,
+  onSettingsTabChange,
+  onAddMention
 }: {
   selectedService: string
   onServiceChange: (service: string) => void
   activeMenu: NavMenuType
   onMenuChange: (menu: NavMenuType) => void
   onSelectItem: (item: ResourceNode | Ticket) => void
+  activeSettingsTab?: 'accounts' | 'integrations'
+  onSettingsTabChange?: (tab: 'accounts' | 'integrations') => void
+  onAddMention: (item: MentionItem) => void
 }) {
   return (
     <div className="flex h-full">
@@ -44,6 +56,9 @@ function SidebarContent({
         selectedService={selectedService}
         activeMenu={activeMenu}
         onSelect={onSelectItem}
+        activeSettingsTab={activeSettingsTab}
+        onSettingsTabChange={onSettingsTabChange}
+        onAddMention={onAddMention}
       />
     </div>
   )
@@ -57,16 +72,22 @@ function ChatPage() {
   // Layout State
   const [selectedService, setSelectedService] = useState<string>("svc-payment")
   const [activeMenu, setActiveMenu] = useState<NavMenuType>("resources")
+  const [activeSettingsTab, setActiveSettingsTab] = useState<'accounts' | 'integrations'>('accounts')
   const [selectedItem, setSelectedItem] = useState<ResourceNode | Ticket | null>(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
+  // Mention State
+  const { mentions, addMention, removeMention, clearMentions } = useMention()
+  const [isMentionOpen, setIsMentionOpen] = useState(false)
+
   // Chat State
-  const { messages, input, handleInputChange, handleSubmit, setMessages } = useChat({
+  const { messages, input, handleInputChange, handleSubmit, setMessages, setInput } = useChat({
     api: 'http://localhost:3000/api/chat',
-    body: { selectedService },
-    streamProtocol: 'text', // Explicitly tell useChat to expect plain text stream
+    body: { selectedService, mentions }, 
+    streamProtocol: 'text',
   })
   const scrollRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   // Initial Greeting
   useEffect(() => {
@@ -93,8 +114,9 @@ function ChatPage() {
       }
       setMessages(prev => [...prev, contextMsg])
     }
-    // Clear selection on service change
+    // Clear selection and mentions on service change
     setSelectedItem(null)
+    clearMentions()
   }, [selectedService])
 
   useEffect(() => {
@@ -107,6 +129,25 @@ function ChatPage() {
     e.preventDefault()
     if (!input.trim()) return
     handleSubmit(e)
+  }
+
+  const handleCustomInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value
+    handleInputChange(e)
+    if (val.endsWith('@')) {
+      setIsMentionOpen(true)
+    }
+  }
+
+  const handleMentionSelect = (item: MentionItem) => {
+    addMention(item)
+    setIsMentionOpen(false)
+    if (input.endsWith('@')) {
+      setInput(input.slice(0, -1))
+    }
+    setTimeout(() => {
+      inputRef.current?.focus()
+    }, 0)
   }
 
   const handleSelectItem = useCallback((item: ResourceNode | Ticket) => {
@@ -129,120 +170,150 @@ function ChatPage() {
           activeMenu={activeMenu}
           onMenuChange={handleMenuChange}
           onSelectItem={handleSelectItem}
+          activeSettingsTab={activeSettingsTab}
+          onSettingsTabChange={setActiveSettingsTab}
+          onAddMention={addMention}
         />
       </aside>
 
-      {/* Main Chat Area */}
-      <main className="flex-1 flex flex-col min-w-0 bg-background/50">
-        <header className="h-14 border-b flex items-center justify-between px-4 md:px-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="flex items-center gap-2">
-            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-auto flex">
-                <SidebarContent 
-                  selectedService={selectedService}
-                  onServiceChange={setSelectedService}
-                  activeMenu={activeMenu}
-                  onMenuChange={handleMenuChange}
-                  onSelectItem={handleSelectItem}
-                />
-              </SheetContent>
-            </Sheet>
+      {/* Main Content Area - Dynamic based on activeMenu */}
+      {activeMenu === 'settings' ? (
+        <main className="flex-1 flex flex-col min-w-0 bg-background/50 p-6 overflow-y-auto">
+          <div className="max-w-4xl mx-auto w-full">
+            <h1 className="text-2xl font-bold mb-6">Settings</h1>
             
-            <Link to="/" className="flex items-center gap-2 md:hidden">
-               <Bot className="h-6 w-6 text-primary" />
-               <span className="font-semibold">Ocean1 AI</span>
-            </Link>
-            
-            <div className="hidden md:flex items-center gap-2">
-              <span className="font-medium text-sm text-muted-foreground">Context:</span>
-              <Badge variant="outline" className="font-normal">
-                {mockServices.find(s => s.id === selectedService)?.name}
-              </Badge>
+            {activeSettingsTab === 'accounts' && <CloudAccountsPanel serviceId={selectedService} />}
+            {activeSettingsTab === 'integrations' && <IntegrationsPanel serviceId={selectedService} />}
+          </div>
+        </main>
+      ) : (
+        /* Main Chat Area */
+        <main className="flex-1 flex flex-col min-w-0 bg-background/50">
+          <header className="h-14 border-b flex items-center justify-between px-4 md:px-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="flex items-center gap-2">
+              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="md:hidden">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="p-0 w-auto flex">
+                  <SidebarContent 
+                    selectedService={selectedService}
+                    onServiceChange={setSelectedService}
+                    activeMenu={activeMenu}
+                    onMenuChange={handleMenuChange}
+                    onSelectItem={handleSelectItem}
+                    activeSettingsTab={activeSettingsTab}
+                    onSettingsTabChange={setActiveSettingsTab}
+                    onAddMention={addMention}
+                  />
+                </SheetContent>
+              </Sheet>
+              
+              <Link to="/" className="flex items-center gap-2 md:hidden">
+                 <Bot className="h-6 w-6 text-primary" />
+                 <span className="font-semibold">Ocean1 AI</span>
+              </Link>
+              
+              <div className="hidden md:flex items-center gap-2">
+                <span className="font-medium text-sm text-muted-foreground">Context:</span>
+                <Badge variant="outline" className="font-normal">
+                  {mockServices.find(s => s.id === selectedService)?.name}
+                </Badge>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <ModeToggle />
-          </div>
-        </header>
+            <div className="flex items-center gap-2">
+              <ModeToggle />
+            </div>
+          </header>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-6" ref={scrollRef}>
-          <div className="max-w-3xl mx-auto space-y-8">
-            {messages.map((msg) => (
-              <div key={msg.id} className={cn("flex gap-4", msg.role === 'user' ? "flex-row-reverse" : "")}>
-                <Avatar className={cn("h-8 w-8 mt-1 flex items-center justify-center", msg.role === 'assistant' ? "bg-primary text-primary-foreground" : "bg-muted")}>
-                  {msg.role === 'assistant' ? <Bot className="h-5 w-5" /> : <User className="h-5 w-5" />}
-                </Avatar>
-                
-                <div className={cn(
-                  "flex flex-col gap-2 max-w-[80%]",
-                  msg.role === 'user' ? "items-end" : "items-start"
-                )}>
+          <div className="flex-1 overflow-y-auto p-4 md:p-6" ref={scrollRef}>
+            <div className="max-w-3xl mx-auto space-y-8">
+              {messages.map((msg) => (
+                <div key={msg.id} className={cn("flex gap-4", msg.role === 'user' ? "flex-row-reverse" : "")}>
+                  <Avatar className={cn("h-8 w-8 mt-1 flex items-center justify-center", msg.role === 'assistant' ? "bg-primary text-primary-foreground" : "bg-muted")}>
+                    {msg.role === 'assistant' ? <Bot className="h-5 w-5" /> : <User className="h-5 w-5" />}
+                  </Avatar>
+                  
                   <div className={cn(
-                    "rounded-2xl px-4 py-3 text-sm shadow-sm",
-                    msg.role === 'user' 
-                      ? "bg-primary text-primary-foreground rounded-tr-none" 
-                      : "bg-muted/50 border rounded-tl-none"
+                    "flex flex-col gap-2 max-w-[80%]",
+                    msg.role === 'user' ? "items-end" : "items-start"
                   )}>
-                    <div className="prose prose-sm dark:prose-invert max-w-none">
-                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    <div className={cn(
+                      "rounded-2xl px-4 py-3 text-sm shadow-sm",
+                      msg.role === 'user' 
+                        ? "bg-primary text-primary-foreground rounded-tr-none" 
+                        : "bg-muted/50 border rounded-tl-none"
+                    )}>
+                      <div className="prose prose-sm dark:prose-invert max-w-none">
+                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      </div>
                     </div>
+                    <span className="text-xs text-muted-foreground">
+                      {msg.createdAt instanceof Date 
+                        ? msg.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        : new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    {msg.createdAt instanceof Date 
-                      ? msg.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                      : new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="p-4 md:p-6 border-t bg-background">
-          <div className="max-w-3xl mx-auto">
-            <form onSubmit={handleSend} className="relative flex items-center">
-              <div className="absolute left-2 flex gap-1">
-                 <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button type="button" variant="ghost" size="icon" className="h-8 w-8">
-                        <Terminal className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Run Command</TooltipContent>
-                  </Tooltip>
-                 </TooltipProvider>
-              </div>
-              <Input 
-                value={input}
-                onChange={handleInputChange}
-                placeholder={`Ask about ${mockServices.find(s => s.id === selectedService)?.name}...`}
-                className="pl-12 pr-12 h-12 rounded-full shadow-sm"
-              />
-              <Button 
-                type="submit" 
-                size="icon" 
-                className="absolute right-1.5 h-9 w-9 rounded-full"
-                disabled={!input.trim()}
-              >
-                <Send className="h-4 w-4" />
-                <span className="sr-only">Send</span>
-              </Button>
-            </form>
-            <div className="mt-2 text-center text-xs text-muted-foreground">
-              Ocean1 AI can make mistakes. Please verify critical operations.
+              ))}
             </div>
           </div>
-        </div>
-      </main>
 
-      {/* Detail Panel (Right Sidebar) */}
-      {selectedItem && (
+          <div className="p-4 md:p-6 border-t bg-background">
+            <div className="max-w-3xl mx-auto">
+              <MentionChipList mentions={mentions} onRemove={removeMention} />
+              
+              <form onSubmit={handleSend} className="relative flex items-center">
+                <div className="absolute left-2 flex gap-1 z-10">
+                   <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8">
+                          <Terminal className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Run Command</TooltipContent>
+                    </Tooltip>
+                   </TooltipProvider>
+                </div>
+                
+                <MentionAutocomplete 
+                  isOpen={isMentionOpen} 
+                  onOpenChange={setIsMentionOpen}
+                  onSelect={handleMentionSelect}
+                  serviceId={selectedService}
+                >
+                  <Input 
+                    ref={inputRef}
+                    value={input}
+                    onChange={handleCustomInputChange}
+                    placeholder={`Ask about ${mockServices.find(s => s.id === selectedService)?.name}... (Type @ to mention)`}
+                    className="pl-12 pr-12 h-12 rounded-full shadow-sm w-full"
+                  />
+                </MentionAutocomplete>
+
+                <Button 
+                  type="submit" 
+                  size="icon" 
+                  className="absolute right-1.5 h-9 w-9 rounded-full z-10"
+                  disabled={!input.trim()}
+                >
+                  <Send className="h-4 w-4" />
+                  <span className="sr-only">Send</span>
+                </Button>
+              </form>
+              <div className="mt-2 text-center text-xs text-muted-foreground">
+                Ocean1 AI can make mistakes. Please verify critical operations.
+              </div>
+            </div>
+          </div>
+        </main>
+      )}
+
+      {/* Detail Panel (Right Sidebar) - Only for Resources/Tickets */}
+      {activeMenu !== 'settings' && selectedItem && (
         <aside className="w-80 border-l bg-background hidden lg:block shrink-0">
           <DetailPanel 
             item={selectedItem} 

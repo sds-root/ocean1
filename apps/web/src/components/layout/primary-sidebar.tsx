@@ -17,8 +17,17 @@ import {
 } from "lucide-react"
 import { mockServices } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Link } from "@tanstack/react-router"
 
-export type NavMenuType = "resources" | "tickets" | "monitoring" | "settings"
+export type NavMenuType = "resources" | "tickets" | "monitoring" | "settings" | "profile"
 
 interface PrimarySidebarProps {
   selectedService: string
@@ -86,19 +95,35 @@ export function PrimarySidebar({
 
       {/* User Profile */}
       <div className="p-4 border-t mt-auto">
-        <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
-          <Avatar className="h-9 w-9 border">
-            <AvatarImage src="/placeholder-user.jpg" />
-            <AvatarFallback><User className="h-5 w-5" /></AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">John Doe</p>
-            <p className="text-xs text-muted-foreground truncate">DevOps Engineer</p>
-          </div>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-            <LogOut className="h-4 w-4" />
-          </Button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+              <Avatar className="h-9 w-9 border">
+                <AvatarImage src="/placeholder-user.jpg" />
+                <AvatarFallback><User className="h-5 w-5" /></AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">John Doe</p>
+                <p className="text-xs text-muted-foreground truncate">DevOps Engineer</p>
+              </div>
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link to="/profile" className="cursor-pointer flex items-center">
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => alert("Logged out")} className="cursor-pointer text-destructive focus:text-destructive">
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   )
