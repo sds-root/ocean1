@@ -34,7 +34,7 @@ const app = new Elysia()
       const result = streamText({
         model,
         messages,
-        system: `You are a helpful assistant managing service: ${selectedService || "Unknown"}.`,
+        system: `너는 유능한 비서야. 사용자의 언어에 맞춰 짧고 자연스럽게 다음 서비스에 관련해 답해줘: ${selectedService || "Unknown"}.`,
       });
 
       // Use the standard Data Stream Protocol for v6

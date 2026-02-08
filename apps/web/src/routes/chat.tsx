@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useChat } from '@ai-sdk/react'
 import ReactMarkdown from 'react-markdown'
 import { Button } from '@/components/ui/button'
@@ -17,6 +17,37 @@ import {
   Send, Bot, User, Menu, Terminal
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+
+
+function SidebarContent({
+  selectedService,
+  onServiceChange,
+  activeMenu,
+  onMenuChange,
+  onSelectItem
+}: {
+  selectedService: string
+  onServiceChange: (service: string) => void
+  activeMenu: NavMenuType
+  onMenuChange: (menu: NavMenuType) => void
+  onSelectItem: (item: ResourceNode | Ticket) => void
+}) {
+  return (
+    <div className="flex h-full">
+      <PrimarySidebar 
+        selectedService={selectedService}
+        onServiceChange={onServiceChange}
+        activeMenu={activeMenu}
+        onMenuChange={onMenuChange}
+      />
+      <SecondaryPanel 
+        selectedService={selectedService}
+        activeMenu={activeMenu}
+        onSelect={onSelectItem}
+      />
+    </div>
+  )
+}
 
 export const Route = createFileRoute('/chat')({
   component: ChatPage,
@@ -78,35 +109,27 @@ function ChatPage() {
     handleSubmit(e)
   }
 
-  const handleSelectItem = (item: ResourceNode | Ticket) => {
+  const handleSelectItem = useCallback((item: ResourceNode | Ticket) => {
     setSelectedItem(item)
     // Optional: Auto-close mobile menu if item selected (if we implemented mobile detail view)
-  }
+  }, [])
 
-  const SidebarContent = () => (
-    <div className="flex h-full">
-      <PrimarySidebar 
-        selectedService={selectedService}
-        onServiceChange={setSelectedService}
-        activeMenu={activeMenu}
-        onMenuChange={(menu) => {
-          setActiveMenu(menu)
-          setSelectedItem(null) // Clear selection when changing menu
-        }}
-      />
-      <SecondaryPanel 
-        selectedService={selectedService}
-        activeMenu={activeMenu}
-        onSelect={handleSelectItem}
-      />
-    </div>
-  )
+  const handleMenuChange = useCallback((menu: NavMenuType) => {
+    setActiveMenu(menu)
+    setSelectedItem(null) // Clear selection when changing menu
+  }, [])
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex h-full border-r shrink-0">
-        <SidebarContent />
+        <SidebarContent 
+          selectedService={selectedService}
+          onServiceChange={setSelectedService}
+          activeMenu={activeMenu}
+          onMenuChange={handleMenuChange}
+          onSelectItem={handleSelectItem}
+        />
       </aside>
 
       {/* Main Chat Area */}
@@ -120,7 +143,13 @@ function ChatPage() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="p-0 w-auto flex">
-                <SidebarContent />
+                <SidebarContent 
+                  selectedService={selectedService}
+                  onServiceChange={setSelectedService}
+                  activeMenu={activeMenu}
+                  onMenuChange={handleMenuChange}
+                  onSelectItem={handleSelectItem}
+                />
               </SheetContent>
             </Sheet>
             
