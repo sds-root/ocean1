@@ -57,3 +57,90 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ── Chat Markdown ── */
+
+.chat-markdown {
+  @apply text-sm leading-relaxed;
+}
+
+/* User bubble: inherit color from parent (text-primary-foreground) */
+.prose-invert-user {
+  --tw-prose-body: inherit;
+  --tw-prose-headings: inherit;
+  --tw-prose-bold: inherit;
+  --tw-prose-links: inherit;
+  --tw-prose-code: inherit;
+  --tw-prose-counters: inherit;
+  --tw-prose-bullets: inherit;
+  --tw-prose-quotes: inherit;
+  color: inherit;
+}
+
+.chat-markdown p {
+  @apply my-2 first:mt-0 last:mb-0;
+}
+
+.chat-markdown > *:first-child {
+  @apply mt-0;
+}
+
+.chat-markdown > *:last-child {
+  @apply mb-0;
+}
+
+/* GFM task list */
+.chat-markdown ul.contains-task-list {
+  @apply list-none pl-0;
+}
+
+.chat-markdown li.task-list-item {
+  @apply flex items-start gap-2;
+}
+
+.chat-markdown li.task-list-item input[type="checkbox"] {
+  @apply mt-1 h-4 w-4 rounded border-border;
+  accent-color: hsl(var(--primary));
+}
+
+/* highlight.js - dark theme (github-dark) */
+.dark .hljs {
+  color: #c9d1d9;
+  background: transparent;
+}
+.dark .hljs-keyword,
+.dark .hljs-built_in,
+.dark .hljs-type { color: #ff7b72; }
+.dark .hljs-string,
+.dark .hljs-attr { color: #a5d6ff; }
+.dark .hljs-number,
+.dark .hljs-literal { color: #79c0ff; }
+.dark .hljs-comment { color: #8b949e; font-style: italic; }
+.dark .hljs-title,
+.dark .hljs-function { color: #d2a8ff; }
+.dark .hljs-variable,
+.dark .hljs-params { color: #c9d1d9; }
+.dark .hljs-meta { color: #ffa657; }
+.dark .hljs-selector-class,
+.dark .hljs-selector-tag { color: #7ee787; }
+
+/* highlight.js - light theme (github-light) */
+.hljs {
+  color: #24292f;
+  background: transparent;
+}
+.hljs-keyword,
+.hljs-built_in,
+.hljs-type { color: #cf222e; }
+.hljs-string,
+.hljs-attr { color: #0a3069; }
+.hljs-number,
+.hljs-literal { color: #0550ae; }
+.hljs-comment { color: #6e7781; font-style: italic; }
+.hljs-title,
+.hljs-function { color: #8250df; }
+.hljs-variable,
+.hljs-params { color: #24292f; }
+.hljs-meta { color: #953800; }
+.hljs-selector-class,
+.hljs-selector-tag { color: #116329; }

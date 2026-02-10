@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useChat } from '@ai-sdk/react'
-import ReactMarkdown from 'react-markdown'
+import { ChatMarkdown } from '@/components/chat/chat-markdown'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ModeToggle } from '@/components/mode-toggle'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
@@ -20,8 +21,10 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useMention } from '@/hooks/use-mention'
+import { useSuggestions, type ResolvedSuggestion } from '@/hooks/use-suggestions'
 import { MentionChipList } from '@/components/chat/mention-chip-list'
 import { MentionAutocomplete } from '@/components/chat/mention-autocomplete'
+import { SuggestionChips } from '@/components/chat/suggestion-chips'
 import { type MentionItem } from '@/types/mention'
 
 
@@ -79,14 +82,15 @@ function ChatPage() {
   // Mention State
   const { mentions, addMention, removeMention, clearMentions } = useMention()
   const [isMentionOpen, setIsMentionOpen] = useState(false)
+  const suggestions = useSuggestions(mentions)
 
   // Chat State
-  const { messages, input, handleInputChange, handleSubmit, setMessages, setInput } = useChat({
+  const { messages, input, handleInputChange, handleSubmit, setMessages, setInput, status } = useChat({
     api: 'http://localhost:3000/api/chat',
-    body: { selectedService, mentions }, 
+    body: { selectedService, mentions },
     streamProtocol: 'text',
   })
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Initial Greeting
@@ -120,10 +124,8 @@ function ChatPage() {
   }, [selectedService])
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-    }
-  }, [messages])
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, status])
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault()
@@ -149,6 +151,16 @@ function ChatPage() {
       inputRef.current?.focus()
     }, 0)
   }
+
+  const handleSuggestionSelect = useCallback((suggestion: ResolvedSuggestion) => {
+    setInput(suggestion.resolvedPrompt)
+    setTimeout(() => {
+      const form = inputRef.current?.closest('form')
+      if (form) {
+        form.requestSubmit()
+      }
+    }, 0)
+  }, [setInput])
 
   const handleSelectItem = useCallback((item: ResourceNode | Ticket) => {
     setSelectedItem(item)
@@ -228,43 +240,63 @@ function ChatPage() {
             </div>
           </header>
 
-          <div className="flex-1 overflow-y-auto p-4 md:p-6" ref={scrollRef}>
+          <ScrollArea className="flex-1">
+            <div className="p-4 md:p-6">
             <div className="max-w-3xl mx-auto space-y-8">
               {messages.map((msg) => (
                 <div key={msg.id} className={cn("flex gap-4", msg.role === 'user' ? "flex-row-reverse" : "")}>
                   <Avatar className={cn("h-8 w-8 mt-1 flex items-center justify-center", msg.role === 'assistant' ? "bg-primary text-primary-foreground" : "bg-muted")}>
                     {msg.role === 'assistant' ? <Bot className="h-5 w-5" /> : <User className="h-5 w-5" />}
                   </Avatar>
-                  
+
                   <div className={cn(
                     "flex flex-col gap-2 max-w-[80%]",
                     msg.role === 'user' ? "items-end" : "items-start"
                   )}>
                     <div className={cn(
                       "rounded-2xl px-4 py-3 text-sm shadow-sm",
-                      msg.role === 'user' 
-                        ? "bg-primary text-primary-foreground rounded-tr-none" 
+                      msg.role === 'user'
+                        ? "bg-primary text-primary-foreground rounded-tr-none"
                         : "bg-muted/50 border rounded-tl-none"
                     )}>
-                      <div className="prose prose-sm dark:prose-invert max-w-none">
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
-                      </div>
+                      <ChatMarkdown content={msg.content} variant={msg.role === 'user' ? 'user' : 'assistant'} />
                     </div>
                     <span className="text-xs text-muted-foreground">
-                      {msg.createdAt instanceof Date 
+                      {msg.createdAt instanceof Date
                         ? msg.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                         : new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
                 </div>
               ))}
+
+              {/* Typing Indicator - only show before streaming starts */}
+              {status === 'submitted' && (
+                <div className="flex gap-4">
+                  <Avatar className="h-8 w-8 mt-1 flex items-center justify-center bg-primary text-primary-foreground">
+                    <Bot className="h-5 w-5" />
+                  </Avatar>
+                  <div className="flex flex-col gap-2 items-start">
+                    <div className="rounded-2xl px-4 py-3 text-sm shadow-sm bg-muted/50 border rounded-tl-none">
+                      <div className="flex items-center gap-1">
+                        <span className="w-2 h-2 bg-foreground/50 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                        <span className="w-2 h-2 bg-foreground/50 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                        <span className="w-2 h-2 bg-foreground/50 rounded-full animate-bounce" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div ref={bottomRef} />
             </div>
-          </div>
+            </div>
+          </ScrollArea>
 
           <div className="p-4 md:p-6 border-t bg-background">
             <div className="max-w-3xl mx-auto">
               <MentionChipList mentions={mentions} onRemove={removeMention} />
-              
+              <SuggestionChips suggestions={suggestions} onSelect={handleSuggestionSelect} />
+
               <form onSubmit={handleSend} className="relative flex items-center">
                 <div className="absolute left-2 flex gap-1 z-10">
                    <TooltipProvider>

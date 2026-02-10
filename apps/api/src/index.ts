@@ -6,6 +6,39 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { db } from "./db";
 import { todos } from "./db/schema";
 
+interface MentionPayload {
+  type: 'resource' | 'ticket'
+  name: string
+  original: {
+    id: string
+    resourceType?: string
+    status?: string
+    details?: Record<string, string>
+    title?: string
+    priority?: string
+    description?: string
+  }
+}
+
+function buildMentionContext(mentions?: MentionPayload[]): string {
+  if (!mentions || mentions.length === 0) return ''
+
+  const contextLines = mentions.map((m) => {
+    if (m.type === 'resource') {
+      const { resourceType, status, details } = m.original
+      const detailStr = details
+        ? Object.entries(details).map(([k, v]) => `${k}=${v}`).join(', ')
+        : ''
+      return `- ${resourceType?.toUpperCase() || 'Resource'} "${m.name}": status=${status}${detailStr ? `, ${detailStr}` : ''}`
+    } else {
+      const { id, status, priority, title } = m.original
+      return `- Ticket ${id}: "${title || m.name}" (${status}, ${priority} priority)`
+    }
+  })
+
+  return `\n\n현재 컨텍스트:\n${contextLines.join('\n')}`
+}
+
 const app = new Elysia()
   .use(cors())
   .get("/", () => "Hello Elysia")
@@ -13,8 +46,9 @@ const app = new Elysia()
     return await db.select().from(todos).all();
   })
   .post("/api/chat", async ({ body }: { body: any }) => {
-    const { messages, selectedService } = body;
+    const { messages, selectedService, mentions } = body;
     const provider = process.env.LLM_PROVIDER || "gemini";
+    const mentionContext = buildMentionContext(mentions);
 
     const google = createGoogleGenerativeAI({
       apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
@@ -34,7 +68,8 @@ const app = new Elysia()
       const result = streamText({
         model,
         messages,
-        system: `너는 유능한 비서야. 사용자의 언어에 맞춰 짧고 자연스럽게 다음 서비스에 관련해 답해줘: ${selectedService || "Unknown"}.`,
+        system: `너는 유능한 DevOps 비서야. 사용자의 언어에 맞춰 자연스럽게 답해줘. 현재 서비스: ${selectedService || "Unknown"}${mentionContext}
+사용자가 컨텍스트에 언급된 리소스나 티켓에 대해 질문하면, 제공된 정보를 활용해서 정확하게 답변해줘.`,
       });
 
       // Use the standard Data Stream Protocol for v6
